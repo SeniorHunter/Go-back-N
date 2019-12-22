@@ -18,5 +18,3 @@ def send(packet, connection: socket.socket):
 def receive(connection: socket):
     packet = connection.recv(1024)
     return packet
-
-# done

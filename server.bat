@@ -1,2 +1,2 @@
-python "C:\Users\Amir Hosein\Desktop\Network\Go_Back_N\Server.py"
+python "C:\Users\Amir Hosein\Desktop\Network\go-back-n-protocol\Server.py"
 pause

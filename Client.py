@@ -10,7 +10,7 @@ HOST = '127.0.0.1'
 SEND_FILE_PATH = b'send.jpg'
 TIMEOUT = 0.1
 windows_size = 10
-PACKET_SIZE = 1024
+PACKET_SIZE = 512  # dont change this shit pls
 number_of_packets = 0
 packets = []
 last_ack = -1
@@ -38,7 +38,7 @@ def client(local_socket):
     while not is_finished():
         while not is_send_window_complete():
             UN.send(Packet.encoder(next_packet, packets[next_packet]), local_socket)
-            print("send packet", next_packet)
+            # print("send packet", next_packet)
             next_packet += 1
             time.sleep(0.0001)
 
@@ -47,13 +47,13 @@ def client(local_socket):
 
         if not timer.is_running():
             timer.start()
-            print("timer start")
+            # print("timer start")
 
         while timer.is_running() and not timer.time_out():
             try:
                 ack, _ = Packet.decoder(UN.receive(local_socket))
                 if ack is not None:
-                    print("ack ", ack)
+                    # print("ack ", ack)
                     if ack >= last_ack:
                         last_ack = ack
                         timer.stop()
@@ -61,7 +61,7 @@ def client(local_socket):
                 pass
 
         if timer.time_out():
-            print("time out")
+            # print("time out")
             timer.stop()
             next_packet = last_ack
 
