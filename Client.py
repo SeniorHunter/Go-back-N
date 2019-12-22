@@ -8,9 +8,9 @@ from timer import Timer
 PORT = 65432
 HOST = '127.0.0.1'
 SEND_FILE_PATH = b'send.jpg'
-TIMEOUT = 0.5
-windows_size = 4
-PACKET_SIZE = 1000
+TIMEOUT = 0.1
+windows_size = 10
+PACKET_SIZE = 1024
 number_of_packets = 0
 packets = []
 last_ack = -1
@@ -24,7 +24,7 @@ def is_finished():
 
 
 def is_send_window_complete():
-    return not (next_packet - last_ack < windows_size and next_packet < number_of_packets)
+    return not (next_packet - last_ack <= windows_size and next_packet < number_of_packets)
 
 
 def client(local_socket):
@@ -34,12 +34,11 @@ def client(local_socket):
     global lock
 
     to_buffer()
-    receive_data_thread = threading.Thread(target=receive_data, args=(local_socket,))
-    receive_data_thread.start()
 
     while not is_finished():
         while not is_send_window_complete():
             UN.send(Packet.encoder(next_packet, packets[next_packet]), local_socket)
+            print("send packet", next_packet)
             next_packet += 1
             time.sleep(0.0001)
 
@@ -48,11 +47,21 @@ def client(local_socket):
 
         if not timer.is_running():
             timer.start()
+            print("timer start")
 
         while timer.is_running() and not timer.time_out():
-            time.sleep(0.01)
+            try:
+                ack, _ = Packet.decoder(UN.receive(local_socket))
+                if ack is not None:
+                    print("ack ", ack)
+                    if ack >= last_ack:
+                        last_ack = ack
+                        timer.stop()
+            except:
+                pass
 
         if timer.time_out():
+            print("time out")
             timer.stop()
             next_packet = last_ack
 
@@ -75,19 +84,8 @@ def to_buffer():
         return
 
 
-def receive_data(local_socket):
-    global last_ack
-    global lock
-
-    while not is_finished():
-        ack, _ = Packet.decoder(UN.receive(local_socket))
-
-        if ack >= last_ack:
-            last_ack = ack
-            timer.stop()
-
-
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.connect((HOST, PORT))
+    sock.settimeout(False)
     client(sock)
 
