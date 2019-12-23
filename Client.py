@@ -1,7 +1,7 @@
+import logging
 import socket
 import time
 import Packet
-import UN
 from timer import Timer
 from Packet import Packet
 
@@ -16,6 +16,14 @@ packets = []
 last_ack = -1
 next_packet = 0
 timer = Timer(TIMEOUT)
+logger: logging
+
+
+def initialize_logger():
+    global logger
+    # logging.basicConfig(format='%(asctime)-15s - %(message)s', level="DEBUG", filename="server.log", filemode='w')
+    logging.basicConfig(format='%(asctime)-15s - %(message)s', level="DEBUG")
+    logger = logging.getLogger()
 
 
 def is_finished():
@@ -28,6 +36,7 @@ def is_send_window_complete():
 
 def client(local_socket):
     packet = Packet(local_socket)
+    initialize_logger()
 
     global last_ack
     global next_packet
@@ -37,7 +46,7 @@ def client(local_socket):
     while True:
         while not is_send_window_complete():
             packet.send_packet(next_packet, False, packets[next_packet])
-            print("send packet", next_packet)
+            logging.info("send packet " + str(next_packet))
             next_packet += 1
             time.sleep(0.0001)
 
@@ -46,15 +55,13 @@ def client(local_socket):
 
         if not timer.is_running():
             timer.start()
-            print("timer start")
+            logging.info("timer start")
 
         while timer.is_running() and not timer.time_out():
             try:
                 ack, is_EOT, _ = packet.receive_packet()
-                if is_EOT:
-                    return
                 if ack is not None:
-                    print("ack ", ack)
+                    logging.info("ack " + str(ack))
                     if ack >= last_ack:
                         last_ack = ack
                         timer.stop()
@@ -62,16 +69,13 @@ def client(local_socket):
                 pass
 
         if timer.time_out():
-            print("time out")
+            logging.info("time out")
             timer.stop()
             next_packet = last_ack
 
         if is_finished():
             packet.send_packet(0, True)
             break
-
-        # print("progress: %", int(last_ack / (number_of_packets-1) * 100), flush=True)
-        # os.system('cls')
 
 
 def to_buffer():

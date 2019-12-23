@@ -1,6 +1,3 @@
-# todo flag EOC
-# todo move UN here
-# todo sequence number can reset (% size)
 import socket
 from UN import UN
 

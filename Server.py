@@ -11,7 +11,8 @@ logger: logging
 
 def initialize_logger():
     global logger
-    logging.basicConfig(format='%(asctime)-15s - %(message)s', level="DEBUG", filename="server.log", filemode='w')
+    # logging.basicConfig(format='%(asctime)-15s - %(message)s', level="DEBUG", filename="server.log", filemode='w')
+    logging.basicConfig(format='%(asctime)-15s - %(message)s', level="DEBUG")
     logger = logging.getLogger()
 
 
@@ -19,7 +20,7 @@ def open_file():
     try:
         return open(RECEIVED_FILE_PATH, "wb")  # create a file for received data
     except IOError:
-        print("file error")
+        logging.debug("file error")
         return
 
 
@@ -31,8 +32,8 @@ def server(connection):
     expected_number = 0
     while True:
         sequence_number, is_EOT, data = packet.receive_packet()
-        print(sequence_number, " ", is_EOT)
         if is_EOT:
+            logging.info("EOT received, finishing connection...")
             packet.send_packet(-1, True)
             break
         logger.info("data number " + str(sequence_number) + " received")
@@ -47,6 +48,7 @@ def server(connection):
             # drop and send Ack(exp-num - 1)
             packet.send_packet((expected_number - 1), False)
             logger.info("(resubmit) Ack send: " + str(sequence_number))
+    logging.info("saving file...")
     file.close()
 
 
@@ -55,3 +57,7 @@ with Socket.socket(Socket.AF_INET, Socket.SOCK_STREAM) as socket:
     socket.listen()
     socket, _ = socket.accept()
     server(socket)
+
+
+
+
