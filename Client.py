@@ -1,22 +1,21 @@
 import socket
-import threading
 import time
 import Packet
 import UN
 from timer import Timer
+from Packet import Packet
 
 PORT = 65432
 HOST = '127.0.0.1'
 SEND_FILE_PATH = b'send.jpg'
 TIMEOUT = 0.1
-windows_size = 10
-PACKET_SIZE = 512  # dont change this shit pls
+PACKET_SIZE = 700  # dont change this shit pls
+WINDOW_SIZE = 10
 number_of_packets = 0
 packets = []
 last_ack = -1
 next_packet = 0
 timer = Timer(TIMEOUT)
-lock = threading.Lock()
 
 
 def is_finished():
@@ -24,21 +23,21 @@ def is_finished():
 
 
 def is_send_window_complete():
-    return not (next_packet - last_ack <= windows_size and next_packet < number_of_packets)
+    return not (next_packet - last_ack <= WINDOW_SIZE and next_packet < number_of_packets)
 
 
 def client(local_socket):
+    packet = Packet(local_socket)
+
     global last_ack
     global next_packet
-    global windows_size
-    global lock
 
     to_buffer()
 
-    while not is_finished():
+    while True:
         while not is_send_window_complete():
-            UN.send(Packet.encoder(next_packet, packets[next_packet]), local_socket)
-            # print("send packet", next_packet)
+            packet.send_packet(next_packet, False, packets[next_packet])
+            print("send packet", next_packet)
             next_packet += 1
             time.sleep(0.0001)
 
@@ -47,13 +46,15 @@ def client(local_socket):
 
         if not timer.is_running():
             timer.start()
-            # print("timer start")
+            print("timer start")
 
         while timer.is_running() and not timer.time_out():
             try:
-                ack, _ = Packet.decoder(UN.receive(local_socket))
+                ack, is_EOT, _ = packet.receive_packet()
+                if is_EOT:
+                    return
                 if ack is not None:
-                    # print("ack ", ack)
+                    print("ack ", ack)
                     if ack >= last_ack:
                         last_ack = ack
                         timer.stop()
@@ -61,9 +62,16 @@ def client(local_socket):
                 pass
 
         if timer.time_out():
-            # print("time out")
+            print("time out")
             timer.stop()
             next_packet = last_ack
+
+        if is_finished():
+            packet.send_packet(0, True)
+            break
+
+        # print("progress: %", int(last_ack / (number_of_packets-1) * 100), flush=True)
+        # os.system('cls')
 
 
 def to_buffer():
@@ -80,7 +88,7 @@ def to_buffer():
                 packets.append(data)
                 number_of_packets += 1
     except FileNotFoundError:
-        print("file Error")
+        print("File Error")
         return
 
 
@@ -88,4 +96,3 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.connect((HOST, PORT))
     sock.settimeout(False)
     client(sock)
-

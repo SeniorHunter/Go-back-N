@@ -5,16 +5,19 @@ import random
 import socket
 
 
-DROP_PROBABILITY = 0  # receive through TCP with Drop Probability
+class UN:
+    DROP_PROBABILITY = 0  # receive through TCP with Drop Probability
+    connection: socket
 
+    def __init__(self, connection: socket):
+        self.connection = connection
 
-def send(packet, connection: socket.socket):
-    if random.randint(0, 1) >= DROP_PROBABILITY:
-        connection.send(packet)
-    return
+    def send(self, packet):
+        if random.random() >= self.DROP_PROBABILITY:
+            self.connection.send(packet)
+        return
 
-
-# receive from TCP
-def receive(connection: socket):
-    packet = connection.recv(1024)
-    return packet
+    # receive from TCP
+    def receive(self):
+        packet = self.connection.recv(1024)
+        return packet

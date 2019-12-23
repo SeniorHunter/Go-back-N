@@ -1,17 +1,28 @@
 # todo flag EOC
 # todo move UN here
-# todo remove thread
-# todo file size
 # todo sequence number can reset (% size)
+import socket
+from UN import UN
 
 
-# make a packet with sequence number and data (optional)
-def encoder(sequence_number, data=b''):
-    byte = sequence_number.to_bytes(6, byteorder="little", signed=True)
-    return byte + data
+class Packet:
+    connection: socket
+    un: UN
+    is_EOC: bool
 
+    def __init__(self, connection):
+        self.connection = connection
+        self.un = UN(connection)
 
-# extract a packet
-def decoder(packet):
-    sequence_number = int.from_bytes(packet[:6], byteorder="little", signed=True)
-    return sequence_number, packet[6:]
+    # make a packet with sequence number and data (optional)
+    def send_packet(self, sequence_number, is_EOT: bool, data=b''):
+        seq_byte = sequence_number.to_bytes(6, byteorder="little", signed=True)
+        EOT_byte = is_EOT.to_bytes(1, byteorder="little", signed=False)
+        self.un.send(seq_byte + EOT_byte + data)
+
+    # extract a packet
+    def receive_packet(self):
+        packet = self.un.receive()
+        sequence_number = int.from_bytes(packet[:6], byteorder="little", signed=True)
+        is_EOT = int.from_bytes(packet[6:7], byteorder="little", signed=False)
+        return sequence_number, is_EOT, packet[7:]
