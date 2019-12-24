@@ -1,5 +1,4 @@
 import socket as Socket
-import Packet
 import logging
 from Packet import Packet
 
