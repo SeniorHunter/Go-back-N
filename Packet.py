@@ -1,15 +1,11 @@
-# ---------------------------------------- #
-# ------------ Packet Manager ------------ #
-# ---------------------------------------- #
-
 import socket
 from UN import UN
 
 
 class Packet:
     connection: socket
-    is_EOC: bool
     un: UN
+    is_EOC: bool
 
     def __init__(self, connection):
         self.connection = connection
