@@ -2,9 +2,17 @@ import time
 
 
 class Timer:
-    timeout_interval = 0
+    """Assigns the timer to a package
+
+    Attributes:
+        timeout_interval : float
+            sets the time to check if the packet is lost
+        running : bool
+        start_time : float
+    """
+    timeout_interval: float
+    start_time: float
     running = False
-    start_time = 0
 
     def __init__(self, timeout_interval):
         self.timeout_interval = timeout_interval
