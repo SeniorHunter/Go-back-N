@@ -2,7 +2,7 @@ import logging
 import socket as Socket
 import time
 import Packet
-from timer import Timer
+from Timer import Timer
 from Packet import Packet
 
 PORT = 65432
