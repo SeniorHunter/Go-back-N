@@ -3,6 +3,22 @@ from UN import UN
 
 
 class Packet:
+    """Encodes or decodes the packets
+
+    Attributes:
+
+    is_EOC : bool
+        flag to determine the end of connection
+
+    Methods:
+    send_packet(sequence_number, is_EOT: bool, data=b'')
+        assembles the packet by appending the sequence number , EOC flag and the data and then sends it using
+        the un instance
+    receive_packet()
+        extracts the packet and retrieves the sequence number , EOC flag then the data and returns them
+
+
+    """
     connection: socket
     un: UN
     is_EOC: bool

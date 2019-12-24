@@ -22,6 +22,23 @@ packet: Packet
 
 
 def client(connection):
+    """The file is divided to packets and gets sent. Until the window size is reached, packets are sent.
+    As long as a timeout doesn't happen the client keeps receiving acknowledgement, otherwise the client
+    will retransmit from the last received ack. Process ends when all the packets are sent.
+
+    Attributes:
+    packet : Packet
+    last_ack : int
+        number of the last packet confirmed by server.
+    next_packet : int
+        number of the packet to be sent
+
+    Methods:
+    initialize_logger()
+    to_buffer()
+        saves the divided file
+
+    """
     global packet
     packet = Packet(connection)
     initialize_logger()
@@ -57,6 +74,9 @@ def client(connection):
 
 
 def send_window():
+    """Packets are assembled and sent
+
+    """
     global next_packet
     packet.send_packet(next_packet, False, packets[next_packet])
     next_packet += 1
@@ -64,6 +84,10 @@ def send_window():
 
 
 def receive_ack():
+    """The ack sent by the server is checked; if the sequence is correct, the acknowledgement is saved
+        and timer is stopped
+
+    """
     global last_ack
     try:
         ack, _, _ = packet.receive_packet()
@@ -84,14 +108,28 @@ def initialize_logger():
 
 
 def is_finished():
+    """Is called to check if the file is fully sent
+
+    """
     return last_ack >= number_of_packets - 1
 
 
 def is_send_window_complete():
+    """Is called to check if a complete window is sent
+
+    :return: boolean
+    """
     return not (next_packet - last_ack <= WINDOW_SIZE and next_packet < number_of_packets)
 
 
 def to_buffer():
+    """The file which is going to be sent is divided in packet size parts and is saved to a list
+
+    Attributes:
+    number_of_packets : int
+    packets : list
+
+    """
     global number_of_packets
     global packets
 
